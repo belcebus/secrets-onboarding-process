@@ -21,11 +21,12 @@ parser.add_argument('--env', type=str, required=False, help='Repository environm
 args = parser.parse_args()
 
 
-secret_name = args.secret_name
-secret_value = args.secret_value
-owner_name = args.owner_name
-repo_name = args.repo_name
+secret_name = args.name
+secret_value = args.value
+owner_name = args.org
+repo_name = args.repo
 token = args.token
+environment = args.env
 
 # Encrypt the secret with the repository's public key using libsodium
 
@@ -58,8 +59,14 @@ print("Encrypted: ", encrypted)
 
 # Add the secret to GitHub
 
+url = ""
+
 # Define the GitHub API URL to add a secret
-url = f"https://api.github.com/repos/{owner_name}/{repo_name}/actions/secrets/{secret_name}"
+if environment:
+    # Define the GitHub API URL to add a secret with an environment
+    url = f"https://api.github.com/repos/{owner_name}/{repo_name}/environments/{environment}/secrets/{secret_name}"
+else:
+    url = f"https://api.github.com/repos/{owner_name}/{repo_name}/actions/secrets/{secret_name}"
 
 # Transform the base64-encoded secret into a serializable object to be able to send it in the request
 encrypted_value = base64.b64encode(encrypted).decode("utf-8")
@@ -74,7 +81,6 @@ headers = {
 
 print("URL: ", url)
 print("Data: ", data)
-print("Headers: ", headers)
 
 # Send the PUT request to add the secret
 response = requests.put(url, headers=headers, data=json.dumps(data))
